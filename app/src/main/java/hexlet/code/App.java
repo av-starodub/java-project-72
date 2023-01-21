@@ -3,7 +3,10 @@ package hexlet.code;
 import hexlet.code.controllers.RootController;
 import io.javalin.Javalin;
 
-public class App {
+public final class App {
+    private App() {
+    }
+
     public static void main(String[] args) {
         Javalin app = getApp();
         app.start(getPort());
