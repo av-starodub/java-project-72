@@ -1,35 +1,41 @@
 package hexlet.code;
 
 import io.javalin.Javalin;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import io.javalin.testtools.JavalinTest;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import kong.unirest.Unirest;
-
+import static java.util.Objects.nonNull;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
-public class AppTest {
-    private static Javalin app;
-    private static String baseUrl;
+class AppTest {
+    private static final int OK_STATUS_CODE = 200;
 
-    @BeforeAll
-    public static void beforeAll() {
+    private Javalin app;
+
+    @BeforeEach
+    void getUp() {
         app = App.getApp();
-        app.start(5000);
-        int port = app.port();
-        baseUrl = "http://localhost:" + port;
     }
 
-    @AfterAll
-    public static void afterAll() {
+    @AfterEach
+    void tearDown() {
         app.stop();
     }
 
     @Test
-    public void checkRootRoutHandler() {
-        var response = Unirest.get(baseUrl).asString();
-        assertThat(response.getStatus()).isEqualTo(200);
-        assertThat(response.getBody()).contains("Hello World!");
+    @DisplayName("checkGetRootEndpoint - should handle GET / correctly")
+    void checkGetRootEndpoint() {
+        JavalinTest.test(app, (server, client) -> {
+
+            var response = client.get("/");
+            assertThat(response.code()).isEqualTo(OK_STATUS_CODE);
+
+            var body = response.body();
+            var bodyToString = nonNull(body) ? body.string() : "";
+            assertThat(bodyToString).contains("Hello World!");
+        });
     }
 }

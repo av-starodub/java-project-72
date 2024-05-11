@@ -4,6 +4,7 @@ import hexlet.code.controllers.RootController;
 import io.javalin.Javalin;
 
 public final class App {
+    private static final String DEFAULT_PORT = "7070";
     private App() {
     }
 
@@ -13,7 +14,7 @@ public final class App {
     }
 
     private static int getPort() {
-        String port = System.getenv().getOrDefault("PORT", "5000");
+        String port = System.getenv().getOrDefault("PORT", DEFAULT_PORT);
         return Integer.parseInt(port);
     }
 
@@ -32,7 +33,7 @@ public final class App {
     public static Javalin getApp() {
         Javalin app = Javalin.create(config -> {
             if (!isProduction()) {
-                config.plugins.enableDevLogging();
+                config.bundledPlugins.enableDevLogging();
             }
         });
         addRoutes(app);
