@@ -3,13 +3,11 @@ package hexlet.code;
 import hexlet.code.controllers.RootController;
 import hexlet.code.repository.AbstractDao;
 import io.javalin.Javalin;
+import lombok.extern.slf4j.Slf4j;
 import org.flywaydb.core.Flyway;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public final class App {
-
-    public static final Logger log = LoggerFactory.getLogger(App.class);
     private static final String DEFAULT_PORT = "7070";
 
     private App() {
