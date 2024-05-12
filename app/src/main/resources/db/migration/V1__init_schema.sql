@@ -1,5 +1,9 @@
-create table urls (
-    id         bigint not null primary key,
-    name       varchar(255),
-    created_at timestamp not null
+DROP TABLE IF EXISTS urls;
+
+CREATE TABLE urls
+(
+    id         bigint GENERATED ALWAYS AS IDENTITY,
+    name       varchar(255) NOT NULL,
+    created_at timestamp    NOT NULL,
+    CONSTRAINT pk_url PRIMARY KEY (id)
 );

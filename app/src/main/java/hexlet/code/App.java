@@ -24,7 +24,7 @@ public final class App {
         Javalin app = Javalin.create(config -> {
             if (!"production".equals(System.getenv().get("APP_MODE"))) {
                 config.bundledPlugins.enableDevLogging();
-                log.info("enable dev logging ");
+                log.info("Javalin developer mode logging enabled ");
             }
         });
         addRoutes(app);
