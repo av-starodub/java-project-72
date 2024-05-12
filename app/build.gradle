@@ -74,6 +74,7 @@ dependencies {
             "org.flywaydb:flyway-core:10.12.0",
             'com.zaxxer:HikariCP'
     )
+    runtimeOnly 'org.flywaydb:flyway-database-postgresql:10.12.0'
     implementation(
             'org.thymeleaf:thymeleaf',
             'nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect',
