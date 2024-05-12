@@ -6,5 +6,5 @@ public final class RootController {
     private RootController() {
     }
 
-    public static Handler welcome = ctx -> ctx.result("Hello World!");
+    public static Handler welcome = ctx -> ctx.render("index.jte");
 }

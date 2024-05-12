@@ -1,14 +1,18 @@
 package hexlet.code;
 
+import gg.jte.ContentType;
+import gg.jte.TemplateEngine;
+import gg.jte.resolve.ResourceCodeResolver;
 import hexlet.code.controllers.RootController;
 import hexlet.code.repository.AbstractDao;
 import io.javalin.Javalin;
+import io.javalin.rendering.template.JavalinJte;
 import lombok.extern.slf4j.Slf4j;
 import org.flywaydb.core.Flyway;
 
 @Slf4j
 public final class App {
-    private static final String DEFAULT_PORT = "7070";
+    private static final String DEFAULT_PORT = "7071";
 
     private App() {
     }
@@ -26,10 +30,17 @@ public final class App {
                 config.bundledPlugins.enableDevLogging();
                 log.info("Javalin developer mode logging enabled ");
             }
+            config.fileRenderer(new JavalinJte(createTemplateEngine()));
         });
         addRoutes(app);
         app.before(ctx -> ctx.attribute("ctx", ctx));
         return app;
+    }
+
+    private static TemplateEngine createTemplateEngine() {
+        var classLoader = App.class.getClassLoader();
+        var codeResolver = new ResourceCodeResolver("templates", classLoader);
+        return TemplateEngine.create(codeResolver, ContentType.Html);
     }
 
     private static void addRoutes(Javalin app) {

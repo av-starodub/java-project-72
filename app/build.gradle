@@ -58,7 +58,6 @@ task managedVersions {
 }
 
 dependencies {
-    implementation 'org.apache.commons:commons-lang3'
     implementation 'ch.qos.logback:logback-classic'
     implementation 'com.fasterxml.jackson.core:jackson-databind'
 
@@ -75,10 +74,9 @@ dependencies {
             'com.zaxxer:HikariCP'
     )
     runtimeOnly 'org.flywaydb:flyway-database-postgresql:10.12.0'
+
     implementation(
-            'org.thymeleaf:thymeleaf',
-            'nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect',
-            'org.thymeleaf.extras:thymeleaf-extras-java8time:3.0.4.RELEASE',
+            "gg.jte:jte:3.1.10",
             'org.webjars:bootstrap:4.5.0'
     )
 

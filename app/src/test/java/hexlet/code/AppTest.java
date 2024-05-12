@@ -35,7 +35,7 @@ class AppTest {
 
             var body = response.body();
             var bodyToString = nonNull(body) ? body.string() : "";
-            assertThat(bodyToString).contains("Hello World!");
+            assertThat(bodyToString).contains("Анализатор страниц");
         });
     }
 }
