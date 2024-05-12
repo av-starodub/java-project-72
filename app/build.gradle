@@ -1,3 +1,5 @@
+import static sun.security.util.Debug.println
+
 plugins {
     id 'java'
     id 'application'
@@ -68,6 +70,8 @@ dependencies {
     )
     implementation(
             'com.h2database:h2',
+            'org.postgresql:postgresql:42.7.2',
+            "org.flywaydb:flyway-core:10.12.0",
             'com.zaxxer:HikariCP'
     )
     implementation(
