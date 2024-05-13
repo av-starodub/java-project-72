@@ -38,4 +38,19 @@ class AppTest {
             assertThat(bodyToString).contains("Анализатор страниц");
         });
     }
+
+    @Test
+    @DisplayName("checkGetRootEndpoint - should handle POST /urls correctly")
+    void checkPostToUrlsEndpoint() {
+        JavalinTest.test(app, (server, client) -> {
+            var requestBody = "name=https://some-domain.org";
+            var response = client.post("/urls");
+            assertThat(response.code()).isEqualTo(OK_STATUS_CODE);
+
+            var body = response.body();
+            var bodyToString = nonNull(body) ? body.string() : "";
+            assertThat(bodyToString).contains("https://some-domain.org");
+        });
+    }
+
 }

@@ -2,7 +2,7 @@ package hexlet.code.datasource;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import hexlet.code.repository.AbstractDao;
+import hexlet.code.repository.AbstractBaseDao;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -28,7 +28,7 @@ public final class DriverManager {
         } else {
             var fileName = "db_default.properties";
             var dbProp = new Properties();
-            try (var is = AbstractDao.class.getClassLoader().getResourceAsStream(fileName)) {
+            try (var is = AbstractBaseDao.class.getClassLoader().getResourceAsStream(fileName)) {
                 dbProp.load(is);
             } catch (IOException e) {
                 throw new RuntimeException("db default properties load error ");

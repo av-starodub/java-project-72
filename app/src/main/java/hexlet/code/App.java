@@ -4,7 +4,7 @@ import gg.jte.ContentType;
 import gg.jte.TemplateEngine;
 import gg.jte.resolve.ResourceCodeResolver;
 import hexlet.code.controllers.RootController;
-import hexlet.code.repository.AbstractDao;
+import hexlet.code.repository.AbstractBaseDao;
 import io.javalin.Javalin;
 import io.javalin.rendering.template.JavalinJte;
 import lombok.extern.slf4j.Slf4j;
@@ -55,7 +55,7 @@ public final class App {
     private static void flywayMigrate() {
         log.info("db migration started...");
         var flyway = Flyway.configure()
-                .dataSource(AbstractDao.DATASOURCE)
+                .dataSource(AbstractBaseDao.DATASOURCE)
                 .locations("classpath:/db/migration")
                 .load();
         flyway.migrate();
