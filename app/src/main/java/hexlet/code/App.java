@@ -4,7 +4,9 @@ import gg.jte.ContentType;
 import gg.jte.TemplateEngine;
 import gg.jte.resolve.ResourceCodeResolver;
 import hexlet.code.controllers.RootController;
+import hexlet.code.controllers.UrlController;
 import hexlet.code.repository.AbstractBaseDao;
+import hexlet.code.repository.UrlDao;
 import io.javalin.Javalin;
 import io.javalin.rendering.template.JavalinJte;
 import lombok.extern.slf4j.Slf4j;
@@ -12,19 +14,19 @@ import org.flywaydb.core.Flyway;
 
 @Slf4j
 public final class App {
-    private static final String DEFAULT_PORT = "7071";
+    public static final String DEFAULT_PORT = "7071";
 
     private App() {
     }
 
     public static void main(String[] args) {
-        flywayMigrate();
         var app = getApp();
         var port = getPort();
         app.start(port);
     }
 
     public static Javalin getApp() {
+        flywayMigrate();
         Javalin app = Javalin.create(config -> {
             if (!"production".equals(System.getenv().get("APP_MODE"))) {
                 config.bundledPlugins.enableDevLogging();
@@ -44,7 +46,12 @@ public final class App {
     }
 
     private static void addRoutes(Javalin app) {
-        app.get("/", RootController.welcome);
+        var urlDao = new UrlDao();
+        var urlController = new UrlController(urlDao);
+        app.get("/", RootController.root());
+        app.post("/urls", urlController.create());
+        app.get("/urls", urlController.showAll());
+        app.get("/urls/{id}", urlController.showById());
     }
 
     private static int getPort() {

@@ -11,9 +11,13 @@ import java.sql.Timestamp;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Url extends AbstractBaseEntity {
-
+public class Url {
+    private long id;
     private String name;
-
     private Timestamp createdAt;
+
+    public Url(long urlId, String url) {
+        id = urlId;
+        name = url;
+    }
 }
