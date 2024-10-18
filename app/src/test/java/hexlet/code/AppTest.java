@@ -73,9 +73,8 @@ class AppTest {
     @DisplayName("Should return 404 if url not exists")
     void checkNotFound() {
         JavalinTest.test(app, (server, client) -> {
-            var response = client.get("/urls/1");
+            var response = client.get("/urls/11111");
             assertThat(response.code()).isEqualTo(NOT_FOUND_STATUS_CODE);
         });
     }
-
 }
