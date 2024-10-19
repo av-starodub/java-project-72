@@ -90,6 +90,7 @@ dependencies {
             'org.junit.jupiter:junit-jupiter-params',
             'org.assertj:assertj-core'
     )
+    compileOnly ('com.konghq:unirest-java-core:4.4.4')
 }
 
 test {
