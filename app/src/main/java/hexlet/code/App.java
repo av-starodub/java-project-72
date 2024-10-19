@@ -6,6 +6,7 @@ import gg.jte.resolve.ResourceCodeResolver;
 import hexlet.code.controllers.RootController;
 import hexlet.code.controllers.UrlController;
 import hexlet.code.repository.AbstractBaseDao;
+import hexlet.code.repository.UrlCheckDao;
 import hexlet.code.repository.UrlDao;
 import io.javalin.Javalin;
 import io.javalin.rendering.template.JavalinJte;
@@ -47,11 +48,13 @@ public final class App {
 
     private static void addRoutes(Javalin app) {
         var urlDao = new UrlDao();
-        var urlController = new UrlController(urlDao);
+        var urlCheckDao = new UrlCheckDao();
+        var urlController = new UrlController(urlDao, urlCheckDao);
         app.get("/", RootController.root());
         app.post("/urls", urlController.create());
         app.get("/urls", urlController.showAll());
         app.get("/urls/{id}", urlController.showById());
+        app.post("/urls/{id}/checks", urlController.checkUrl());
     }
 
     private static int getPort() {

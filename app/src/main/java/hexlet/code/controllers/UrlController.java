@@ -1,25 +1,34 @@
 package hexlet.code.controllers;
 
 import hexlet.code.model.Url;
+import hexlet.code.model.UrlCheck;
 import hexlet.code.page.UrlPage;
 import hexlet.code.page.UrlsPage;
+import hexlet.code.repository.UrlCheckDao;
 import hexlet.code.repository.UrlDao;
 import hexlet.code.repository.exception.DuplicateUrlException;
 import io.javalin.http.Handler;
 import io.javalin.http.NotFoundResponse;
 import io.javalin.rendering.template.TemplateUtil;
+import kong.unirest.core.Unirest;
+import org.jsoup.Jsoup;
 
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 
 public final class UrlController {
+
     private final UrlDao urlDao;
 
-    public UrlController(UrlDao dao) {
-        this.urlDao = dao;
+    private final UrlCheckDao urlCheckDao;
+
+    public UrlController(UrlDao uDao, UrlCheckDao checkDao) {
+        urlDao = uDao;
+        urlCheckDao = checkDao;
     }
 
     public Handler create() {
@@ -67,10 +76,41 @@ public final class UrlController {
         return ctx -> {
             var id = ctx.pathParamAsClass("id", Long.class).get();
             var url = urlDao.findById(id).orElseThrow(() -> new NotFoundResponse("Страница не найдена"));
-            var page = new UrlPage(url);
+            var checks = urlCheckDao.findChecksByUrlId(id);
+            var page = new UrlPage(url, checks);
             page.setFlash(ctx.consumeSessionAttribute("flash"));
             page.setAlertType(ctx.consumeSessionAttribute("alertType"));
             ctx.render("url.jte", TemplateUtil.model("page", page));
+        };
+    }
+
+    public Handler checkUrl() {
+        return ctx -> {
+            var urlId = ctx.pathParamAsClass("id", Long.class).get();
+            var url = urlDao.findById(urlId).orElseThrow(() -> new NotFoundResponse("Страница не найдена"));
+            Unirest.get(url.getName())
+                    .asString()
+                    .ifSuccess(response -> {
+                        var body = Jsoup.parse(response.getBody());
+                        var desc = body.selectFirst("meta[name=description]");
+                        var newCheck = UrlCheck.builder()
+                                .urlId(urlId)
+                                .statusCode(response.getStatus())
+                                .title(body.title())
+                                .h1(body.selectFirst("h1").text())
+                                .description(nonNull(desc) ? desc.attr("content") : "")
+                                .build();
+                        urlCheckDao.save(newCheck);
+                        ctx.sessionAttribute("flash", "Страница успешно проверена");
+                        ctx.sessionAttribute("alertType", "success");
+                    })
+                    .ifFailure(response -> {
+                        ctx.status(response.getStatus());
+                        ctx.sessionAttribute("flash", "Ошибка проверки");
+                        ctx.sessionAttribute("alertType", "danger");
+                    });
+            ctx.redirect("/urls/%s".formatted(urlId));
+            Unirest.shutDown();
         };
     }
 }

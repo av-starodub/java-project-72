@@ -40,8 +40,30 @@ content = @`
                     </tr>
                     </thead>
                     <tbody>
-                    <tr>
-                    </tr>
+                    @if(page.getUrlChecks() != null)
+                        @for(var urlCheck : page.getUrlChecks())
+                            <tr>
+                                <td>
+                                    ${urlCheck.getId()}
+                                </td>
+                                <td>
+                                    ${urlCheck.getStatusCode()}
+                                </td>
+                                <td>
+                                    ${urlCheck.getTitle()}
+                                </td>
+                                <td>
+                                    ${urlCheck.getH1()}
+                                </td>
+                                <td>
+                                    ${urlCheck.getDescription()}
+                                </td>
+                                <td>
+                                    ${urlCheck.formatCreatedAt()}
+                                </td>
+                            </tr>
+                        @endfor
+                    @endif
                     </tbody>
                 </table>
             </div>

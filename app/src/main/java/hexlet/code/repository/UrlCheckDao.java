@@ -38,7 +38,7 @@ public final class UrlCheckDao extends AbstractBaseDao {
 
     public List<UrlCheck> findChecksByUrlId(Long urlId) {
         return executeSelect(
-                "SELECT * FROM url_checks WHERE id = ? ORDER BY created_at DESC",
+                "SELECT * FROM url_checks WHERE url_Id = ? ORDER BY created_at DESC",
                 List.of(urlId),
                 resultSet -> {
                     var checks = new ArrayList<UrlCheck>();
@@ -57,7 +57,7 @@ public final class UrlCheckDao extends AbstractBaseDao {
 
     public Optional<UrlCheck> findLastCheckByUrlId(Long urlId) {
         return executeSelect(
-                "SELECT * FROM url_checks WHERE id = ? ORDER BY created_at DESC LIMIT 1",
+                "SELECT * FROM url_checks WHERE url_Id = ? ORDER BY created_at DESC LIMIT 1",
                 List.of(urlId),
                 resultSet -> {
                     try {

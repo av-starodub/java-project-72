@@ -7,6 +7,7 @@ import lombok.Setter;
 import lombok.Builder;
 
 import java.sql.Timestamp;
+import java.time.format.DateTimeFormatter;
 
 @Getter
 @Setter
@@ -21,4 +22,8 @@ public class UrlCheck {
     private String h1;
     private String description;
     private Timestamp createdAt;
+
+    public final String formatCreatedAt() {
+        return createdAt.toLocalDateTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy kk:mm"));
+    }
 }
