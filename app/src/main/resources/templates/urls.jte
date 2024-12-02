@@ -17,7 +17,9 @@ content = @`
                 </tr>
                 </thead>
                 <tbody>
-                @for(var url : page.getUrls())
+                @for(var entry : page.getUrlToLastCheckMap().entrySet())
+                    !{var url = entry.getKey();}
+                    !{var urlCheck = entry.getValue();}
                     <tr>
                         <td>
                             ${url.getId()}
@@ -26,8 +28,10 @@ content = @`
                             <a href="/urls/${url.getId()}">${url.getName()}</a>
                         </td>
                         <td>
+                            ${page.formatTimestamp(urlCheck.getCreatedAt(), "dd/MM/yyyy HH:mm")}
                         </td>
                         <td>
+                            ${urlCheck.getStatusCode()}
                         </td>
                     </tr>
                 @endfor

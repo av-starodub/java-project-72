@@ -16,6 +16,7 @@ import org.jsoup.Jsoup;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
@@ -65,7 +66,12 @@ public final class UrlController {
     public Handler showAll() {
         return ctx -> {
             var urls = urlDao.findAll();
-            var page = new UrlsPage(urls);
+            var urlToLastCheckMap = urlDao.findAll().stream()
+                    .collect(Collectors.toMap(
+                            url -> url,
+                            url -> urlCheckDao.findLastCheckByUrlId(url.getId()).orElseGet(UrlCheck::new))
+                    );
+            var page = new UrlsPage(urlToLastCheckMap);
             page.setFlash(ctx.consumeSessionAttribute("flash"));
             page.setAlertType(ctx.consumeSessionAttribute("alertType"));
             ctx.render("urls.jte", TemplateUtil.model("page", page));

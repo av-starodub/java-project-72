@@ -5,6 +5,7 @@ import io.javalin.http.Handler;
 import io.javalin.rendering.template.TemplateUtil;
 
 public final class RootController {
+
     private RootController() {
     }
 

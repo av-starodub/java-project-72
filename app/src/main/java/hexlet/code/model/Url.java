@@ -12,12 +12,10 @@ import java.sql.Timestamp;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Url {
-    private long id;
-    private String name;
-    private Timestamp createdAt;
 
-    public Url(long urlId, String url) {
-        id = urlId;
-        name = url;
-    }
+    private long id;
+
+    private String name;
+
+    private Timestamp createdAt;
 }
