@@ -24,6 +24,7 @@ class AppTest {
 
     @BeforeEach
     void setUp() {
+        App.flywayMigrate();
         app = App.getApp();
     }
 
