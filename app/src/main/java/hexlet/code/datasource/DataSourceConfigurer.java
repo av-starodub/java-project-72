@@ -8,6 +8,8 @@ import javax.sql.DataSource;
 import java.io.IOException;
 import java.util.Properties;
 
+import static java.util.Objects.nonNull;
+
 public final class DataSourceConfigurer {
     private static final int MIN_IDLE_CONNECTIONS = 5;
     private static final int MIN_POOL_SIZE = 10;
@@ -21,8 +23,9 @@ public final class DataSourceConfigurer {
     public static DataSource createHikariDataSource() {
         var config = new HikariConfig();
 
-        if ("production".equals(System.getenv().get("APP_MODE"))) {
-            config.setJdbcUrl(System.getenv().get("JDBC_DATABASE_URL"));
+        var dbUrl = System.getenv().get("JDBC_DATABASE_URL");
+        if (nonNull(dbUrl)) {
+            config.setJdbcUrl(dbUrl);
             config.setUsername(System.getenv().get("USER_NAME"));
             config.setPassword(System.getenv().get("PASSWORD"));
         } else {
@@ -31,13 +34,12 @@ public final class DataSourceConfigurer {
             try (var is = AbstractBaseDao.class.getClassLoader().getResourceAsStream(fileName)) {
                 dbProp.load(is);
             } catch (IOException e) {
-                throw new RuntimeException("db default properties load error ");
+                throw new ReadingDatabasePropertiesException("Default database properties load error", e);
             }
             config.setJdbcUrl(dbProp.getProperty("db.url"));
             config.setUsername(dbProp.getProperty("db.user"));
             config.setPassword(dbProp.getProperty("db.password"));
         }
-
         config.setPoolName("HikariPageAnalyzerPool");
         config.setRegisterMbeans(true);
 
