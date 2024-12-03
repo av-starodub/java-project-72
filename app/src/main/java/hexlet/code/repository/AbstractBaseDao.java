@@ -2,6 +2,8 @@ package hexlet.code.repository;
 
 import hexlet.code.datasource.DataSourceConfigurer;
 import hexlet.code.repository.exception.DataBaseOperationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.sql.PreparedStatement;
@@ -17,6 +19,7 @@ import java.util.function.Function;
 import static java.util.Objects.requireNonNull;
 
 public abstract class AbstractBaseDao {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractBaseDao.class);
 
     public static final DataSource DATASOURCE = DataSourceConfigurer.createHikariDataSource();
 
@@ -120,6 +123,7 @@ public abstract class AbstractBaseDao {
         try {
             return action.call();
         } catch (Exception e) {
+            LOGGER.error("wrapException: ", e);
             throw new DataBaseOperationException(e.getMessage(), e);
         }
     }
