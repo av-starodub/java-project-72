@@ -18,6 +18,10 @@ import org.flywaydb.core.Flyway;
 public final class App {
     public static final String DEFAULT_PORT = "7071";
 
+    public static final Flyway FLYWAY = configureFlyway();
+
+    public static final String APP_MODE = System.getenv().get("APP_MODE");
+
     private App() {
     }
 
@@ -28,9 +32,12 @@ public final class App {
     }
 
     public static Javalin getApp() {
-        flywayMigrate();
+        log.info("db migration started...");
+        FLYWAY.migrate();
+        log.info("db migration finished.");
+        log.info("***");
         Javalin app = Javalin.create(config -> {
-            if (!"production".equals(System.getenv().get("APP_MODE"))) {
+            if (!"production".equals(APP_MODE)) {
                 config.bundledPlugins.enableDevLogging();
                 log.info("Javalin developer mode logging enabled ");
             }
@@ -63,14 +70,12 @@ public final class App {
         return Integer.parseInt(port);
     }
 
-    public static void flywayMigrate() {
-        log.info("db migration started...");
-        var flyway = Flyway.configure()
+    private static Flyway configureFlyway() {
+        var isProduction = "production".equals(APP_MODE);
+        return Flyway.configure()
                 .dataSource(AbstractBaseDao.DATASOURCE)
                 .locations("classpath:/db/migration")
+                .cleanDisabled(isProduction)
                 .load();
-        flyway.migrate();
-        log.info("db migration finished.");
-        log.info("***");
     }
 }

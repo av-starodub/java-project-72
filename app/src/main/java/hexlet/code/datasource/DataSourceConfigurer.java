@@ -34,7 +34,7 @@ public final class DataSourceConfigurer {
             try (var is = AbstractBaseDao.class.getClassLoader().getResourceAsStream(fileName)) {
                 dbProp.load(is);
             } catch (IOException e) {
-                throw new ReadingDatabasePropertiesException("Default database properties load error", e);
+                throw new DatabasePropertiesReadException("Default database properties load error", e);
             }
             config.setJdbcUrl(dbProp.getProperty("db.url"));
             config.setUsername(dbProp.getProperty("db.user"));
