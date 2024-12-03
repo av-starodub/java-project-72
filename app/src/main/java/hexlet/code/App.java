@@ -8,6 +8,7 @@ import hexlet.code.controllers.UrlController;
 import hexlet.code.repository.AbstractBaseDao;
 import hexlet.code.repository.UrlCheckDao;
 import hexlet.code.repository.UrlDao;
+import hexlet.code.utils.NamedRoutes;
 import io.javalin.Javalin;
 import io.javalin.rendering.template.JavalinJte;
 import lombok.extern.slf4j.Slf4j;
@@ -50,11 +51,11 @@ public final class App {
         var urlDao = new UrlDao();
         var urlCheckDao = new UrlCheckDao();
         var urlController = new UrlController(urlDao, urlCheckDao);
-        app.get("/", RootController.root());
-        app.post("/urls", urlController.create());
-        app.get("/urls", urlController.showAll());
-        app.get("/urls/{id}", urlController.showById());
-        app.post("/urls/{id}/checks", urlController.checkUrl());
+        app.get(NamedRoutes.root(), RootController.root());
+        app.post(NamedRoutes.urlNew(), urlController.create());
+        app.get(NamedRoutes.urlsAll(), urlController.showAll());
+        app.get(NamedRoutes.urlById(), urlController.showById());
+        app.post(NamedRoutes.checkNew(), urlController.checkUrl());
     }
 
     private static int getPort() {

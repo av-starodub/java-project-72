@@ -1,5 +1,6 @@
 package hexlet.code;
 
+import hexlet.code.utils.NamedRoutes;
 import io.javalin.Javalin;
 import io.javalin.testtools.JavalinTest;
 import okhttp3.mockwebserver.MockResponse;
@@ -31,7 +32,7 @@ class AppTest {
     void checkGetRootEndpoint() {
         JavalinTest.test(app, (server, client) -> {
 
-            var response = client.get("/");
+            var response = client.get(NamedRoutes.root());
             assertThat(response.code()).isEqualTo(OK_STATUS_CODE);
 
             var body = response.body();
@@ -45,7 +46,7 @@ class AppTest {
     void checkPostValidUrl() {
         JavalinTest.test(app, (server, client) -> {
             var requestBody = "url=https://some-domain.org";
-            var response = client.post("/urls", requestBody);
+            var response = client.post(NamedRoutes.urlNew(), requestBody);
             assertThat(response.code()).isEqualTo(OK_STATUS_CODE);
 
             var body = response.body();
@@ -59,7 +60,7 @@ class AppTest {
     void checkPostInvalidUrl() {
         JavalinTest.test(app, (server, client) -> {
             var requestBody = "url=invalid";
-            var response = client.post("/urls", requestBody);
+            var response = client.post(NamedRoutes.urlNew(), requestBody);
             assertThat(response.code()).isEqualTo(OK_STATUS_CODE);
 
             var body = response.body();
@@ -72,7 +73,7 @@ class AppTest {
     @DisplayName("Should return 404 if url not exists")
     void checkNotFound() {
         JavalinTest.test(app, (server, client) -> {
-            var response = client.get("/urls/11111");
+            var response = client.get(NamedRoutes.urlById(0L));
             assertThat(response.code()).isEqualTo(NOT_FOUND_STATUS_CODE);
         });
     }
@@ -97,10 +98,10 @@ class AppTest {
                         """));
         JavalinTest.test(app, (server, client) -> {
             var requestBody = "url=" + mockWebServer.url("/");
-            var postResponse = client.post("/urls", requestBody);
+            var postResponse = client.post(NamedRoutes.urlNew(), requestBody);
             assertThat(postResponse.code()).isEqualTo(OK_STATUS_CODE);
 
-            var checkResponse = client.post("/urls/1/checks");
+            var checkResponse = client.post(NamedRoutes.checkNew(1L));
             assertThat(checkResponse.code()).isEqualTo(OK_STATUS_CODE);
 
             var body = checkResponse.body();

@@ -7,6 +7,7 @@ import hexlet.code.page.UrlsPage;
 import hexlet.code.repository.UrlCheckDao;
 import hexlet.code.repository.UrlDao;
 import hexlet.code.repository.exception.DuplicateUrlException;
+import hexlet.code.utils.NamedRoutes;
 import io.javalin.http.Handler;
 import io.javalin.http.NotFoundResponse;
 import io.javalin.rendering.template.TemplateUtil;
@@ -50,15 +51,15 @@ public final class UrlController {
                 urlDao.save(urlEntity);
                 ctx.sessionAttribute("flash", "Страница успешно добавлена");
                 ctx.sessionAttribute("alertType", "success");
-                ctx.redirect("/urls");
+                ctx.redirect(NamedRoutes.urlsAll());
             } catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
                 ctx.sessionAttribute("flash", "Некорректный URL");
                 ctx.sessionAttribute("alertType", "danger");
-                ctx.redirect("/");
+                ctx.redirect(NamedRoutes.root());
             } catch (DuplicateUrlException e) {
                 ctx.sessionAttribute("flash", "Страница уже существует");
                 ctx.sessionAttribute("alertType", "danger");
-                ctx.redirect("/urls");
+                ctx.redirect(NamedRoutes.urlsAll());
             }
         };
     }
@@ -115,7 +116,7 @@ public final class UrlController {
                         ctx.sessionAttribute("flash", "Ошибка проверки");
                         ctx.sessionAttribute("alertType", "danger");
                     });
-            ctx.redirect("/urls/%s".formatted(urlId));
+            ctx.redirect(NamedRoutes.urlById(urlId));
             Unirest.shutDown();
         };
     }
