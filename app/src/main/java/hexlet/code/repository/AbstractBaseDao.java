@@ -50,14 +50,16 @@ public abstract class AbstractBaseDao {
                     }
                 }
 
-            } catch (SQLIntegrityConstraintViolationException e) {
-                throw new DuplicateEntityException(
-                        "Duplicate entity detected for query '%s' with params=%s".formatted(sqlQuery, params)
-                );
             } catch (SQLException e) {
-                throw new DataBaseOperationException(
-                        "Failed to execute '%s' with params=%s".formatted(sqlQuery, params.toString()), e
-                );
+                if ("23505".equals(e.getSQLState()) || e instanceof SQLIntegrityConstraintViolationException) {
+                    throw new DuplicateEntityException(
+                            "Duplicate entity detected for query '%s' with params=%s".formatted(sqlQuery, params)
+                    );
+                } else {
+                    throw new DataBaseOperationException(
+                            "Failed to execute '%s' with params=%s".formatted(sqlQuery, params.toString()), e
+                    );
+                }
             }
         });
     }
