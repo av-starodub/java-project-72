@@ -22,13 +22,13 @@ public final class App {
     }
 
     public static void main(String[] args) {
-        flywayMigrate();
         var app = getApp();
         var port = getPort();
         app.start(port);
     }
 
     public static Javalin getApp() {
+        flywayMigrate();
         Javalin app = Javalin.create(config -> {
             if (!"production".equals(System.getenv().get("APP_MODE"))) {
                 config.bundledPlugins.enableDevLogging();
