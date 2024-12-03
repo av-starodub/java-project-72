@@ -7,7 +7,7 @@ build:
 	./gradlew clean checkstyleMain checkstyleTest build
 
 install:
-	./gradlew clean install
+	./gradlew clean installDist
 
 run-dist:
 	./build/install/app/bin/app
