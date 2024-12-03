@@ -8,17 +8,17 @@ import javax.sql.DataSource;
 import java.io.IOException;
 import java.util.Properties;
 
-public final class DriverManager {
+public final class DataSourceConfigurer {
     private static final int MIN_IDLE_CONNECTIONS = 5;
     private static final int MIN_POOL_SIZE = 10;
     private static final int CONNECTION_TIMOUT = 3000; //ms
     private static final int MAX_IDLE_TIMOUT = 60000; //ms
     private static final int MAX_CONNECTION_LIFETIME = 600000; //ms
 
-    private DriverManager() {
+    private DataSourceConfigurer() {
     }
 
-    public static DataSource createConnectionPool() {
+    public static DataSource createHikariDataSource() {
         var config = new HikariConfig();
 
         if ("production".equals(System.getenv().get("APP_MODE"))) {
@@ -39,7 +39,6 @@ public final class DriverManager {
         }
 
         config.setPoolName("HikariPageAnalyzerPool");
-        config.setAutoCommit(false);
         config.setRegisterMbeans(true);
 
         config.setMinimumIdle(MIN_IDLE_CONNECTIONS);

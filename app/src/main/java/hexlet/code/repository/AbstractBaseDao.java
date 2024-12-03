@@ -1,6 +1,6 @@
 package hexlet.code.repository;
 
-import hexlet.code.datasource.DriverManager;
+import hexlet.code.datasource.DataSourceConfigurer;
 import hexlet.code.repository.exception.DataBaseOperationException;
 
 import javax.sql.DataSource;
@@ -18,7 +18,7 @@ import static java.util.Objects.requireNonNull;
 
 public abstract class AbstractBaseDao {
 
-    public static final DataSource DATASOURCE = DriverManager.createConnectionPool();
+    public static final DataSource DATASOURCE = DataSourceConfigurer.createHikariDataSource();
 
     private static final int PRIMARY_KEY_COLUMN_INDEX = 1;
 
@@ -72,22 +72,6 @@ public abstract class AbstractBaseDao {
                 try (var resultSet = preparedStatement.executeQuery()) {
                     return Optional.ofNullable(rsHandler.apply(resultSet));
                 }
-            } catch (SQLException e) {
-                throw new DataBaseOperationException(
-                        "Failed to execute '%s' with params=%s".formatted(sqlQuery, params.toString()), e
-                );
-            }
-        });
-    }
-
-    protected final boolean executeDelete(String sqlQuery, List<Object> params) {
-        checkArgs(sqlQuery, params);
-        return executeTransaction(connection -> {
-            try (var preparedStatement =
-                         connection.prepareStatement(sqlQuery, Statement.RETURN_GENERATED_KEYS)) {
-                setPreparedStatementParameters(preparedStatement, params);
-                return preparedStatement.executeUpdate() > 0;
-
             } catch (SQLException e) {
                 throw new DataBaseOperationException(
                         "Failed to execute '%s' with params=%s".formatted(sqlQuery, params.toString()), e
