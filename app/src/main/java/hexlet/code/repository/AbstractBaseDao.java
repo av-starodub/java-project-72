@@ -2,8 +2,7 @@ package hexlet.code.repository;
 
 import hexlet.code.datasource.DataSourceConfigurer;
 import hexlet.code.repository.exception.DataBaseOperationException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import hexlet.code.repository.exception.DuplicateEntityException;
 
 import javax.sql.DataSource;
 import java.sql.PreparedStatement;
@@ -11,6 +10,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -19,27 +19,10 @@ import java.util.function.Function;
 import static java.util.Objects.requireNonNull;
 
 public abstract class AbstractBaseDao {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractBaseDao.class);
 
     public static final DataSource DATASOURCE = DataSourceConfigurer.createHikariDataSource();
 
     private static final int PRIMARY_KEY_COLUMN_INDEX = 1;
-
-    protected final boolean isExist(String sqlQuery, List<Object> params) {
-        checkArgs(sqlQuery, params);
-        return executeTransaction(connection -> {
-            try (var preparedStatement = connection.prepareStatement(sqlQuery)) {
-                setPreparedStatementParameters(preparedStatement, params);
-                try (var resultSet = preparedStatement.executeQuery()) {
-                    return resultSet.next();
-                }
-            } catch (SQLException e) {
-                throw new DataBaseOperationException(
-                        "Failed to execute '%s' with params=%s".formatted(sqlQuery, params.toString()), e
-                );
-            }
-        });
-    }
 
     protected final long executeStatement(String sqlQuery, List<Object> params) {
         checkArgs(sqlQuery, params);
@@ -47,14 +30,30 @@ public abstract class AbstractBaseDao {
         return executeTransaction(connection -> {
             try (var preparedStatement =
                          connection.prepareStatement(sqlQuery, Statement.RETURN_GENERATED_KEYS)) {
-                setPreparedStatementParameters(preparedStatement, params);
-                preparedStatement.executeUpdate();
 
-                try (var resultSet = preparedStatement.getGeneratedKeys()) {
-                    resultSet.next();
-                    return resultSet.getLong(PRIMARY_KEY_COLUMN_INDEX);
+                setPreparedStatementParameters(preparedStatement, params);
+
+                int affectedRows = preparedStatement.executeUpdate();
+                if (affectedRows == 0) {
+                    throw new DataBaseOperationException(
+                            "No rows affected for query '%s' with params=%s".formatted(sqlQuery, params)
+                    );
                 }
 
+                try (var resultSet = preparedStatement.getGeneratedKeys()) {
+                    if (resultSet.next()) {
+                        return resultSet.getLong(PRIMARY_KEY_COLUMN_INDEX);
+                    } else {
+                        throw new DataBaseOperationException(
+                                "No generated keys returned for query '%s' with params=%s".formatted(sqlQuery, params)
+                        );
+                    }
+                }
+
+            } catch (SQLIntegrityConstraintViolationException e) {
+                throw new DuplicateEntityException(
+                        "Duplicate entity detected for query '%s' with params=%s".formatted(sqlQuery, params)
+                );
             } catch (SQLException e) {
                 throw new DataBaseOperationException(
                         "Failed to execute '%s' with params=%s".formatted(sqlQuery, params.toString()), e
@@ -122,8 +121,9 @@ public abstract class AbstractBaseDao {
     private <V> V wrapException(Callable<V> action) {
         try {
             return action.call();
+        } catch (DuplicateEntityException e) {
+            throw e;
         } catch (Exception e) {
-            LOGGER.error("wrapException: ", e);
             throw new DataBaseOperationException(e.getMessage(), e);
         }
     }

@@ -1,7 +1,6 @@
 package hexlet.code.repository;
 
 import hexlet.code.model.Url;
-import hexlet.code.repository.exception.DuplicateUrlException;
 import hexlet.code.repository.exception.UrlDaoException;
 
 import java.sql.ResultSet;
@@ -16,9 +15,6 @@ public final class UrlDao extends AbstractBaseDao {
 
     public Url save(Url url) {
         var name = url.getName();
-        if (isExist("SELECT * FROM urls WHERE name = ?", List.of(name))) {
-            throw new DuplicateUrlException("Url %s already exist".formatted(name));
-        }
         var createdAt = Timestamp.valueOf(LocalDateTime.now());
         var urlId = executeStatement(
                 "INSERT INTO urls (name, created_at) VALUES (?, ?)", List.of(name, createdAt)

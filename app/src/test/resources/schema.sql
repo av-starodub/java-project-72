@@ -4,7 +4,7 @@ DROP TABLE IF EXISTS urls;
 CREATE TABLE urls
 (
     id         bigint GENERATED ALWAYS AS IDENTITY,
-    name       varchar(255) NOT NULL,
+    name       varchar(255) UNIQUE,
     created_at timestamp    NOT NULL,
     CONSTRAINT pk_url PRIMARY KEY (id)
 );
