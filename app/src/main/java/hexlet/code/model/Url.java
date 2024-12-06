@@ -2,20 +2,22 @@ package hexlet.code.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import lombok.NonNull;
 
 import java.sql.Timestamp;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
+@RequiredArgsConstructor
 public class Url {
 
     private long id;
 
-    private String name;
+    @NonNull
+    private final String name;
 
     private Timestamp createdAt;
 }

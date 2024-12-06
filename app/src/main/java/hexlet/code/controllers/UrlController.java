@@ -6,23 +6,20 @@ import hexlet.code.page.UrlPage;
 import hexlet.code.page.UrlsPage;
 import hexlet.code.repository.UrlCheckDao;
 import hexlet.code.repository.UrlDao;
-import hexlet.code.repository.exception.DataBaseOperationException;
-import hexlet.code.repository.exception.DuplicateEntityException;
 import hexlet.code.utils.NamedRoutes;
+import io.javalin.http.Context;
 import io.javalin.http.Handler;
-import io.javalin.http.InternalServerErrorResponse;
+import io.javalin.http.HttpStatus;
 import io.javalin.http.NotFoundResponse;
 import io.javalin.rendering.template.TemplateUtil;
 import kong.unirest.core.Unirest;
+import kong.unirest.core.UnirestException;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.stream.Collectors;
 
-import static java.util.Objects.isNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.Objects.nonNull;
 
 @Slf4j
@@ -39,38 +36,36 @@ public final class UrlController {
 
     public Handler create() {
         return ctx -> {
-            var userInput = ctx.formParam("url");
+            var inputUrl = ctx.formParam("url");
+            requireNonNull(inputUrl, "Parameter inputUrl must not be null");
+
+            var parsedUrl = new URI("");
             try {
-                if (isNull(userInput)) {
-                    throw new IllegalArgumentException();
-                }
-                var uri = new URI(userInput.toLowerCase().strip());
-                var url = uri.toURL();
-                var protocol = url.getProtocol();
-                var host = url.getHost();
-                var port = url.getPort();
-                var normalizedUrl = "%s://%s%s".formatted(protocol, host, port != -1 ? ":" + port : "");
-                var urlEntity = new Url();
-                urlEntity.setName(normalizedUrl);
-                urlDao.save(urlEntity);
-                ctx.sessionAttribute("flash", "Страница успешно добавлена");
-                ctx.sessionAttribute("alertType", "success");
-                ctx.redirect(NamedRoutes.urlsAll());
-            } catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
+                parsedUrl = new URI(inputUrl.toLowerCase().strip());
+            } catch (Exception e) {
                 ctx.sessionAttribute("flash", "Некорректный URL");
                 ctx.sessionAttribute("alertType", "danger");
                 ctx.redirect(NamedRoutes.root());
-            } catch (DuplicateEntityException e) {
-                ctx.sessionAttribute("flash", "Страница уже существует");
-                ctx.sessionAttribute("alertType", "danger");
-                ctx.redirect(NamedRoutes.urlsAll());
-            } catch (DataBaseOperationException e) {
-                log.error("Database error: ", e);
-                throw new InternalServerErrorResponse("Database error");
-            } catch (Exception e) {
-                log.error("Unexpected error: ", e);
-                throw new InternalServerErrorResponse("Server error");
             }
+
+            var normalizedUrl = "%s://%s%s".formatted(
+                    parsedUrl.getScheme(),
+                    parsedUrl.getHost(),
+                    parsedUrl.getPort() == -1 ? "" : ":" + parsedUrl.getPort()
+            );
+
+            var isUrlExist = urlDao.findByName(normalizedUrl).isPresent();
+
+            if (isUrlExist) {
+                ctx.sessionAttribute("flash", "Страница уже существует");
+                ctx.sessionAttribute("alertType", "info");
+            } else {
+                var newUrl = new Url(normalizedUrl);
+                urlDao.save(newUrl);
+                ctx.sessionAttribute("flash", "Страница успешно добавлена");
+                ctx.sessionAttribute("alertType", "success");
+            }
+            ctx.redirect(NamedRoutes.urlsAll());
         };
     }
 
@@ -106,42 +101,55 @@ public final class UrlController {
             var urlId = ctx.pathParamAsClass("id", Long.class).get();
             try {
                 var url = urlDao.findById(urlId).orElseThrow(() -> new NotFoundResponse(
-                        "Page with id=%s not found".formatted(urlId))
+                        "Page with id=%s not found in data base".formatted(urlId))
                 );
-                Unirest.get(url.getName())
-                        .asString()
-                        .ifSuccess(response -> {
-                            var body = Jsoup.parse(response.getBody());
-                            var desc = body.selectFirst("meta[name=description]");
-                            var newCheck = UrlCheck.builder()
-                                    .urlId(urlId)
-                                    .statusCode(response.getStatus())
-                                    .title(body.title())
-                                    .h1(body.selectFirst("h1").text())
-                                    .description(nonNull(desc) ? desc.attr("content") : "")
-                                    .build();
-                            urlCheckDao.save(newCheck);
-                            ctx.sessionAttribute("flash", "Страница успешно проверена");
-                            ctx.sessionAttribute("alertType", "success");
-                        })
-                        .ifFailure(response -> {
-                            ctx.status(response.getStatus());
-                            ctx.sessionAttribute("flash", "Ошибка проверки");
-                            ctx.sessionAttribute("alertType", "danger");
-                        });
-                ctx.redirect(NamedRoutes.urlById(urlId));
+                executeCheck(ctx, url);
             } catch (NotFoundResponse e) {
                 log.error(e.getMessage(), e);
-                throw e;
-            } catch (DataBaseOperationException e) {
-                log.error("Database error: ", e);
-                throw new InternalServerErrorResponse("Database error");
+                ctx.sessionAttribute("flash", e.getMessage());
+                ctx.sessionAttribute("flash-type", "danger");
             } catch (Exception e) {
-                log.error("Unexpected error: ", e);
-                throw new InternalServerErrorResponse("Server error");
+                log.error("Server error: {}", e.getMessage(), e);
+                ctx.sessionAttribute("flash", e.getMessage());
+                ctx.sessionAttribute("alertType", "danger");
             } finally {
                 Unirest.shutDown();
+                ctx.redirect(NamedRoutes.urlById(urlId));
             }
         };
+    }
+
+    private void executeCheck(Context ctx, Url url) {
+        try {
+            Unirest.get(url.getName())
+                    .asString()
+                    .ifSuccess(response -> {
+                        var body = Jsoup.parse(response.getBody());
+                        var desc = body.selectFirst("meta[name=description]");
+                        var newCheck = UrlCheck.builder()
+                                .urlId(url.getId())
+                                .statusCode(response.getStatus())
+                                .title(body.title())
+                                .h1(body.selectFirst("h1").text())
+                                .description(nonNull(desc) ? desc.attr("content") : "")
+                                .build();
+                        urlCheckDao.save(newCheck);
+                        ctx.sessionAttribute("flash", "Страница успешно проверена");
+                        ctx.sessionAttribute("alertType", "success");
+                    })
+                    .ifFailure(response -> {
+                        log.error("Request failed with status: {}, body: {}", response.getStatus(), response.getBody());
+                        response.getParsingError().ifPresent(error ->
+                                log.error("Parsing error: {}", error.getMessage(), error));
+                        ctx.status(response.getStatus());
+                        ctx.sessionAttribute("flash", "Ошибка проверки");
+                        ctx.sessionAttribute("alertType", "danger");
+                    });
+        } catch (UnirestException e) {
+            log.error("UnirestException occurred: {}", e.getMessage(), e);
+            ctx.status(HttpStatus.INTERNAL_SERVER_ERROR);
+            ctx.sessionAttribute("flash", "Ошибка подключения к серверу");
+            ctx.sessionAttribute("alertType", "danger");
+        }
     }
 }

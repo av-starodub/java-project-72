@@ -16,26 +16,30 @@ public final class UrlDao extends AbstractBaseDao {
     public Url save(Url url) {
         var name = url.getName();
         var createdAt = Timestamp.valueOf(LocalDateTime.now());
-        var urlId = executeStatement(
-                "INSERT INTO urls (name, created_at) VALUES (?, ?)", List.of(name, createdAt)
-        );
+        var urlId = executeStatement("INSERT INTO urls (name, created_at) VALUES (?, ?)", List.of(name, createdAt));
         return new Url(urlId, name, createdAt);
     }
 
     public Optional<Url> findById(long id) {
-        return executeSelect(
-                "SELECT * FROM urls WHERE id = ?", List.of(id), resultSet -> {
-                    try {
-                        if (resultSet.next()) {
-                            return mapResultSetToUrl(resultSet);
-                        } else {
-                            return null;
-                        }
-                    } catch (SQLException e) {
-                        throw new UrlDaoException("Failed to handle ResultSet", e);
-                    }
+        return findByAttribute("SELECT * FROM urls WHERE id = ?", id);
+    }
+
+    public Optional<Url> findByName(String url) {
+        return findByAttribute("SELECT * FROM urls WHERE name = ?", url);
+    }
+
+    private Optional<Url> findByAttribute(String sqlQuery, Object attribute) {
+        return executeSelect(sqlQuery, List.of(attribute), resultSet -> {
+            try {
+                if (resultSet.next()) {
+                    return mapResultSetToUrl(resultSet);
+                } else {
+                    return null;
                 }
-        );
+            } catch (SQLException e) {
+                throw new UrlDaoException("Failed to handle ResultSet", e);
+            }
+        });
     }
 
     public List<Url> findAll() {
