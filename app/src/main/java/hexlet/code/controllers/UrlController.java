@@ -2,6 +2,7 @@ package hexlet.code.controllers;
 
 import hexlet.code.model.Url;
 import hexlet.code.model.UrlCheck;
+import hexlet.code.page.UrlDto;
 import hexlet.code.page.UrlPage;
 import hexlet.code.page.UrlsPage;
 import hexlet.code.repository.UrlCheckDao;
@@ -72,12 +73,14 @@ public final class UrlController {
     public Handler showAll() {
         return ctx -> {
             var urls = urlDao.findAll();
-            var urlToLastCheckMap = urlDao.findAll().stream()
-                    .collect(Collectors.toMap(
-                            url -> url,
-                            url -> urlCheckDao.findLastCheckByUrlId(url.getId()).orElseGet(UrlCheck::new))
-                    );
-            var page = new UrlsPage(urlToLastCheckMap);
+            var latestChecks = urlCheckDao.findLatestChecks();
+            var urlDtos = urls.stream()
+                    .map(url -> {
+                        var latestCheck = latestChecks.getOrDefault(url.getId(), new UrlCheck());
+                        return UrlDto.toUrlDto(url, latestCheck);
+                    })
+                    .toList();
+            var page = new UrlsPage(urlDtos);
             page.setFlash(ctx.consumeSessionAttribute("flash"));
             page.setAlertType(ctx.consumeSessionAttribute("alertType"));
             ctx.render("urls.jte", TemplateUtil.model("page", page));

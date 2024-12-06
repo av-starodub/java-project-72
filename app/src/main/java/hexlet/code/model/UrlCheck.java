@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 @Getter
 @Builder
@@ -25,5 +25,5 @@ public class UrlCheck {
 
     private String description;
 
-    private Timestamp createdAt;
+    private LocalDateTime createdAt;
 }

@@ -17,21 +17,19 @@ content = @`
                 </tr>
                 </thead>
                 <tbody>
-                @for(var entry : page.getUrlToLastCheckMap().entrySet())
-                    !{var url = entry.getKey();}
-                    !{var urlCheck = entry.getValue();}
+                @for(var urlDto : page.getUrlDtos())
                     <tr>
                         <td>
-                            ${url.getId()}
+                            ${urlDto.getId()}
                         </td>
                         <td>
-                            <a href="/urls/${url.getId()}">${url.getName()}</a>
+                            <a href="/urls/${urlDto.getId()}">${urlDto.getName()}</a>
                         </td>
                         <td>
-                            ${page.formatTimestamp(urlCheck.getCreatedAt(), "dd/MM/yyyy HH:mm")}
+                            ${page.formatTimestamp(urlDto.getLatestCheckCreatedAt(), "dd/MM/yyyy HH:mm")}
                         </td>
                         <td>
-                            ${urlCheck.getStatusCode()}
+                            ${urlDto.getLatestCheckStatusCode()}
                         </td>
                     </tr>
                 @endfor

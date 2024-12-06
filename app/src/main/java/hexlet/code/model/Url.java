@@ -3,13 +3,11 @@ package hexlet.code.model;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.NonNull;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 @Getter
-@Setter
 @AllArgsConstructor
 @RequiredArgsConstructor
 public class Url {
@@ -19,5 +17,5 @@ public class Url {
     @NonNull
     private final String name;
 
-    private Timestamp createdAt;
+    private LocalDateTime createdAt;
 }

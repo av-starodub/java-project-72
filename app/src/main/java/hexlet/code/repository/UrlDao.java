@@ -17,7 +17,7 @@ public final class UrlDao extends AbstractBaseDao {
         var name = url.getName();
         var createdAt = Timestamp.valueOf(LocalDateTime.now());
         var urlId = executeStatement("INSERT INTO urls (name, created_at) VALUES (?, ?)", List.of(name, createdAt));
-        return new Url(urlId, name, createdAt);
+        return new Url(urlId, name, createdAt.toLocalDateTime());
     }
 
     public Optional<Url> findById(long id) {
@@ -62,7 +62,7 @@ public final class UrlDao extends AbstractBaseDao {
             var urlId = resultSet.getLong("id");
             var urlName = resultSet.getString("name");
             var createdAt = resultSet.getTimestamp("created_at");
-            return new Url(urlId, urlName, createdAt);
+            return new Url(urlId, urlName, createdAt.toLocalDateTime());
         } catch (SQLException e) {
             throw new UrlDaoException("Failed to map ResultSet to Url", e);
         }

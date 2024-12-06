@@ -2,16 +2,16 @@ package hexlet.code.page;
 
 import hexlet.code.model.Url;
 import hexlet.code.model.UrlCheck;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
 @Getter
-@AllArgsConstructor
+@RequiredArgsConstructor
 public final class UrlPage extends BasePage {
 
-    private Url url;
+    private final Url url;
 
-    private List<UrlCheck> urlChecks;
+    private final List<UrlCheck> urlChecks;
 }

@@ -1,17 +1,13 @@
 package hexlet.code.page;
 
-import hexlet.code.model.Url;
-import hexlet.code.model.UrlCheck;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.RequiredArgsConstructor;
 
-import java.util.Map;
+import java.util.List;
 
 @Getter
-@Setter
-@AllArgsConstructor
+@RequiredArgsConstructor
 public final class UrlsPage extends BasePage {
 
-    private final Map<Url, UrlCheck> urlToLastCheckMap;
+    private final List<UrlDto> urlDtos;
 }
