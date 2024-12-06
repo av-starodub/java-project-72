@@ -14,9 +14,8 @@ import io.javalin.http.InternalServerErrorResponse;
 import io.javalin.http.NotFoundResponse;
 import io.javalin.rendering.template.TemplateUtil;
 import kong.unirest.core.Unirest;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -26,9 +25,8 @@ import java.util.stream.Collectors;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
+@Slf4j
 public final class UrlController {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(UrlController.class);
 
     private final UrlDao urlDao;
 
@@ -67,10 +65,10 @@ public final class UrlController {
                 ctx.sessionAttribute("alertType", "danger");
                 ctx.redirect(NamedRoutes.urlsAll());
             } catch (DataBaseOperationException e) {
-                LOGGER.error("Database error: ", e);
+                log.error("Database error: ", e);
                 throw new InternalServerErrorResponse("Database error");
             } catch (Exception e) {
-                LOGGER.error("Unexpected error: ", e);
+                log.error("Unexpected error: ", e);
                 throw new InternalServerErrorResponse("Server error");
             }
         };
@@ -133,13 +131,13 @@ public final class UrlController {
                         });
                 ctx.redirect(NamedRoutes.urlById(urlId));
             } catch (NotFoundResponse e) {
-                LOGGER.error(e.getMessage(), e);
+                log.error(e.getMessage(), e);
                 throw e;
             } catch (DataBaseOperationException e) {
-                LOGGER.error("Database error: ", e);
+                log.error("Database error: ", e);
                 throw new InternalServerErrorResponse("Database error");
             } catch (Exception e) {
-                LOGGER.error("Unexpected error: ", e);
+                log.error("Unexpected error: ", e);
                 throw new InternalServerErrorResponse("Server error");
             } finally {
                 Unirest.shutDown();
