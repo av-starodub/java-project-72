@@ -11,17 +11,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 
 import java.io.IOException;
+import java.util.regex.Pattern;
+
+import static kong.unirest.HttpStatus.OK;
+import static kong.unirest.HttpStatus.NOT_FOUND;
+import static kong.unirest.HttpStatus.INTERNAL_SERVER_ERROR;
 
 import static java.util.Objects.nonNull;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 class AppTest {
-
-    private static final int OK_STATUS_CODE = 200;
-
-    private static final int NOT_FOUND_STATUS_CODE = 404;
-
-    private static final int SERVER_ERROR_STATUS_CODE = 500;
 
     private Javalin app;
 
@@ -41,7 +40,7 @@ class AppTest {
         JavalinTest.test(app, (server, client) -> {
 
             var response = client.get(NamedRoutes.root());
-            assertThat(response.code()).isEqualTo(OK_STATUS_CODE);
+            assertThat(response.code()).isEqualTo(OK);
 
             var body = response.body();
             var bodyToString = nonNull(body) ? body.string() : "";
@@ -55,7 +54,7 @@ class AppTest {
         JavalinTest.test(app, (server, client) -> {
             var requestBody = "url=https://some-domain.org";
             var response = client.post(NamedRoutes.urlNew(), requestBody);
-            assertThat(response.code()).isEqualTo(OK_STATUS_CODE);
+            assertThat(response.code()).isEqualTo(OK);
 
             var body = response.body();
             var bodyToString = nonNull(body) ? body.string() : "";
@@ -72,7 +71,7 @@ class AppTest {
 
             var requestBody = "url=https://some-domain.org";
             var response = client.post(NamedRoutes.urlNew(), requestBody);
-            assertThat(response.code()).isEqualTo(SERVER_ERROR_STATUS_CODE);
+            assertThat(response.code()).isEqualTo(INTERNAL_SERVER_ERROR);
         });
     }
 
@@ -82,7 +81,7 @@ class AppTest {
         JavalinTest.test(app, (server, client) -> {
             var requestBody = "url=invalid";
             var response = client.post(NamedRoutes.urlNew(), requestBody);
-            assertThat(response.code()).isEqualTo(OK_STATUS_CODE);
+            assertThat(response.code()).isEqualTo(OK);
 
             var body = response.body();
             var bodyToString = nonNull(body) ? body.string() : "";
@@ -95,17 +94,40 @@ class AppTest {
     void checkNotFound() {
         JavalinTest.test(app, (server, client) -> {
             var response = client.get(NamedRoutes.urlById(0L));
-            assertThat(response.code()).isEqualTo(NOT_FOUND_STATUS_CODE);
+            assertThat(response.code()).isEqualTo(NOT_FOUND);
         });
     }
 
+    @Test
+    @DisplayName("Should handle adding a duplicate Url correctly")
+    void checkSaveDuplicateUrl() {
+        JavalinTest.test(app, ((server, client) -> {
+            var requestBody = "url=https://some-domain.org";
+            var postUrlResponse = client.post(NamedRoutes.urlNew(), requestBody);
+            assertThat(postUrlResponse.code()).isEqualTo(OK);
+
+            var postDuplicateUrlResponse = client.post(NamedRoutes.urlNew(), requestBody);
+            assertThat(postDuplicateUrlResponse.code()).isEqualTo(OK);
+
+            var body = postDuplicateUrlResponse.body();
+            assertThat(body).isNotNull();
+
+            var pattern = Pattern.compile(Pattern.quote("https://some-domain.org"));
+            var matcher = pattern.matcher(body.string());
+            int savedSameUrlCount = 0;
+            while (matcher.find()) {
+                savedSameUrlCount++;
+            }
+            assertThat(savedSameUrlCount).isEqualTo(1);
+        }));
+    }
     @Test
     @DisplayName("Should handle POST /urls/{id}/checks with success check correctly")
     void checkSuccessUrlCheck() throws IOException {
         var mockWebServer = new MockWebServer();
         mockWebServer.start();
         mockWebServer.enqueue(new MockResponse()
-                .setResponseCode(OK_STATUS_CODE)
+                .setResponseCode(OK)
                 .setBody("""
                         <html>
                             <head>
@@ -119,15 +141,25 @@ class AppTest {
                         """));
         JavalinTest.test(app, (server, client) -> {
             var requestBody = "url=" + mockWebServer.url("/");
-            var postResponse = client.post(NamedRoutes.urlNew(), requestBody);
-            assertThat(postResponse.code()).isEqualTo(OK_STATUS_CODE);
+            var postUrlResponse = client.post(NamedRoutes.urlNew(), requestBody);
+            assertThat(postUrlResponse.code()).isEqualTo(OK);
 
-            var checkResponse = client.post(NamedRoutes.checkNew(1L));
-            assertThat(checkResponse.code()).isEqualTo(OK_STATUS_CODE);
+            var postUrlCheckResponse = client.post(NamedRoutes.checkNew(1L));
+            assertThat(postUrlCheckResponse.code()).isEqualTo(OK);
 
-            var body = checkResponse.body();
-            assertThat(body).isNotNull();
-            assertThat(body.string())
+            var uroCheckResponseBody = postUrlCheckResponse.body();
+            assertThat(uroCheckResponseBody).isNotNull();
+            assertThat(uroCheckResponseBody.string())
+                    .contains("Test Page")
+                    .contains("Test Description")
+                    .contains("Test H1");
+
+            var getSavedUrlCheckResponse = client.get(NamedRoutes.urlById(1L));
+            assertThat(getSavedUrlCheckResponse.code()).isEqualTo(OK);
+
+            var savedUrlCheckResponseBody = getSavedUrlCheckResponse.body();
+            assertThat(savedUrlCheckResponseBody).isNotNull();
+            assertThat(savedUrlCheckResponseBody.string())
                     .contains("Test Page")
                     .contains("Test Description")
                     .contains("Test H1");
@@ -141,7 +173,7 @@ class AppTest {
     void checkNotFoundUrlCheck() {
         JavalinTest.test(app, (server, client) -> {
             var checkResponse = client.post(NamedRoutes.checkNew(1L));
-            assertThat(checkResponse.code()).isEqualTo(NOT_FOUND_STATUS_CODE);
+            assertThat(checkResponse.code()).isEqualTo(NOT_FOUND);
         });
     }
 
@@ -151,12 +183,12 @@ class AppTest {
         JavalinTest.test(app, (server, client) -> {
             var requestBody = "url=https://some-domain.org";
             var response = client.post(NamedRoutes.urlNew(), requestBody);
-            assertThat(response.code()).isEqualTo(OK_STATUS_CODE);
+            assertThat(response.code()).isEqualTo(OK);
 
             App.FLYWAY.clean();
 
             var checkResponse = client.post(NamedRoutes.checkNew(1L));
-            assertThat(checkResponse.code()).isEqualTo(SERVER_ERROR_STATUS_CODE);
+            assertThat(checkResponse.code()).isEqualTo(INTERNAL_SERVER_ERROR);
         });
     }
 }
