@@ -1,7 +1,6 @@
 import static sun.security.util.Debug.println
 
 plugins {
-    id 'java'
     id 'application'
     id 'checkstyle'
     id 'io.freefair.lombok' version '8.4'
@@ -122,6 +121,3 @@ jacocoTestReport {
 checkstyle {
     toolVersion '9.2.1'
 }
-
-task stage(dependsOn: ['clean', 'installDist'])
-installDist.mustRunAfter clean

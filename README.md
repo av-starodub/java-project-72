@@ -13,7 +13,7 @@
     git clone https://github.com/av-starodub/java-project-72.git
 
 #### Установка:
-    cd <your path to project folder>/java-project-72.git
+    cd <your path to project folder>/java-project-72
 
     make build
 
