@@ -86,8 +86,9 @@ public abstract class AbstractBaseDao {
 
     private void setPreparedStatementParameters(PreparedStatement preparedStatement, List<Object> queryParams)
             throws SQLException {
-        for (var idx = 0; idx < queryParams.size(); idx++) {
-            preparedStatement.setObject(idx + 1, queryParams.get(idx));
+        var idx = 1;
+        for (var param : queryParams) {
+            preparedStatement.setObject(idx++, param);
         }
     }
 
