@@ -106,13 +106,21 @@ public final class UrlController {
                 var url = urlDao.findById(urlId).orElseThrow(() -> new NotFoundResponse(
                         "Page with id=%s not found in data base".formatted(urlId))
                 );
-                executeCheck(ctx, url);
+                var newCheck = executeCheck(ctx, url);
+                urlCheckDao.save(newCheck);
+                ctx.sessionAttribute("flash", "Страница успешно проверена");
+                ctx.sessionAttribute("alertType", "success");
             } catch (NotFoundResponse e) {
                 log.error(e.getMessage(), e);
                 ctx.sessionAttribute("flash", e.getMessage());
                 ctx.sessionAttribute("flash-type", "danger");
+            } catch (UnirestException e) {
+                log.error("UnirestException occurred: {}", e.getMessage(), e);
+                ctx.sessionAttribute("flash", "Ошибка проверки");
+                ctx.sessionAttribute("alertType", "danger");
             } catch (Exception e) {
                 log.error("Server error: {}", e.getMessage(), e);
+                ctx.status(HttpStatus.INTERNAL_SERVER_ERROR);
                 ctx.sessionAttribute("flash", e.getMessage());
                 ctx.sessionAttribute("alertType", "danger");
             } finally {
@@ -122,37 +130,28 @@ public final class UrlController {
         };
     }
 
-    private void executeCheck(Context ctx, Url url) {
-        try {
-            Unirest.get(url.getName())
-                    .asString()
-                    .ifSuccess(response -> {
-                        var body = Jsoup.parse(response.getBody());
-                        var desc = body.selectFirst("meta[name=description]");
-                        var newCheck = UrlCheck.builder()
-                                .urlId(url.getId())
-                                .statusCode(response.getStatus())
-                                .title(body.title())
-                                .h1(body.selectFirst("h1").text())
-                                .description(nonNull(desc) ? desc.attr("content") : "")
-                                .build();
-                        urlCheckDao.save(newCheck);
-                        ctx.sessionAttribute("flash", "Страница успешно проверена");
-                        ctx.sessionAttribute("alertType", "success");
-                    })
-                    .ifFailure(response -> {
-                        log.error("Request failed with status: {}, body: {}", response.getStatus(), response.getBody());
-                        response.getParsingError().ifPresent(error ->
-                                log.error("Parsing error: {}", error.getMessage(), error));
-                        ctx.status(response.getStatus());
-                        ctx.sessionAttribute("flash", "Ошибка проверки");
-                        ctx.sessionAttribute("alertType", "danger");
-                    });
-        } catch (UnirestException e) {
-            log.error("UnirestException occurred: {}", e.getMessage(), e);
-            ctx.status(HttpStatus.INTERNAL_SERVER_ERROR);
-            ctx.sessionAttribute("flash", "Ошибка подключения к серверу");
-            ctx.sessionAttribute("alertType", "danger");
-        }
+    private UrlCheck executeCheck(Context ctx, Url url) {
+        var newCheck = new UrlCheck[1];
+        Unirest.get(url.getName())
+                .asString()
+                .ifSuccess(response -> {
+                    var doc = Jsoup.parse(response.getBody());
+                    var desc = doc.selectFirst("meta[name=description]");
+                    var h1 = doc.selectFirst("h1");
+                    newCheck[0] = UrlCheck.builder()
+                            .urlId(url.getId())
+                            .statusCode(response.getStatus())
+                            .title(doc.title())
+                            .h1(nonNull(h1) ? h1.text() : null)
+                            .description(nonNull(desc) ? desc.attr("content") : "")
+                            .build();
+                })
+                .ifFailure(response -> {
+                    log.error("Request failed with status: {}, body: {}", response.getStatus(), response.getBody());
+                    ctx.status(response.getStatus());
+                }).getParsingError().ifPresent(error -> {
+                    throw new UnirestException(error.getMessage(), error);
+                });
+        return newCheck[0];
     }
 }
