@@ -1,5 +1,7 @@
 package hexlet.code;
 
+import hexlet.code.repository.UrlCheckDao;
+import hexlet.code.repository.UrlDao;
 import hexlet.code.utils.NamedRoutes;
 import io.javalin.Javalin;
 import io.javalin.testtools.JavalinTest;
@@ -52,13 +54,21 @@ class AppTest {
     @DisplayName("Should handle POST /urls with valid url correctly")
     void checkPostValidUrl() {
         JavalinTest.test(app, (server, client) -> {
-            var requestBody = "url=https://some-domain.org";
+            var urlName = "https://some-domain.org";
+            var requestBody = "url=" + urlName;
             var response = client.post(NamedRoutes.urlNew(), requestBody);
             assertThat(response.code()).isEqualTo(OK);
 
             var body = response.body();
             var bodyToString = nonNull(body) ? body.string() : "";
             assertThat(bodyToString).contains("https://some-domain.org");
+
+            var optionalUrl = new UrlDao().findByName(urlName);
+            var savedUrl = optionalUrl.orElse(null);
+            assertThat(savedUrl).isNotNull();
+            assertThat(savedUrl.getId()).isNotNull();
+            assertThat(savedUrl.getCreatedAt()).isNotNull();
+            assertThat(savedUrl).hasFieldOrPropertyWithValue("name", urlName);
         });
     }
 
@@ -79,13 +89,19 @@ class AppTest {
     @DisplayName("Should handle POST /urls with invalid url correctly")
     void checkPostInvalidUrl() {
         JavalinTest.test(app, (server, client) -> {
-            var requestBody = "url=invalid";
+            var invalidUrl = "invalid";
+            var requestBody = "url=" + invalidUrl;
             var response = client.post(NamedRoutes.urlNew(), requestBody);
             assertThat(response.code()).isEqualTo(OK);
+
 
             var body = response.body();
             var bodyToString = nonNull(body) ? body.string() : "";
             assertThat(bodyToString).doesNotContain("invalid");
+
+            var optionalUrl = new UrlDao().findByName(invalidUrl);
+            var savedUrl = optionalUrl.orElse(null);
+            assertThat(savedUrl).isNull();
         });
     }
 
@@ -121,6 +137,7 @@ class AppTest {
             assertThat(savedSameUrlCount).isEqualTo(1);
         }));
     }
+
     @Test
     @DisplayName("Should handle POST /urls/{id}/checks with success check correctly")
     void checkSuccessUrlCheck() throws IOException {
@@ -140,11 +157,23 @@ class AppTest {
                         </html>
                         """));
         JavalinTest.test(app, (server, client) -> {
-            var requestBody = "url=" + mockWebServer.url("/");
+            var url = mockWebServer.url("/");
+            var requestBody = "url=" + url;
             var postUrlResponse = client.post(NamedRoutes.urlNew(), requestBody);
             assertThat(postUrlResponse.code()).isEqualTo(OK);
 
-            var postUrlCheckResponse = client.post(NamedRoutes.checkNew(1L));
+            var normalizedUrl = "%s://%s%s".formatted(
+                    url.scheme(),
+                    url.host(),
+                    url.port() == -1 ? "" : ":" + url.port()
+            );
+
+            var optionalUrl = new UrlDao().findByName(normalizedUrl);
+            var savedUrl = optionalUrl.orElse(null);
+            assertThat(savedUrl).isNotNull();
+
+            var savedUrlId = savedUrl.getId();
+            var postUrlCheckResponse = client.post(NamedRoutes.checkNew(savedUrlId));
             assertThat(postUrlCheckResponse.code()).isEqualTo(OK);
 
             var uroCheckResponseBody = postUrlCheckResponse.body();
@@ -154,15 +183,18 @@ class AppTest {
                     .contains("Test Description")
                     .contains("Test H1");
 
-            var getSavedUrlCheckResponse = client.get(NamedRoutes.urlById(1L));
-            assertThat(getSavedUrlCheckResponse.code()).isEqualTo(OK);
+            var checks = new UrlCheckDao().findChecksByUrlId(savedUrlId);
+            var savedUrlCheck = checks.get(0);
 
-            var savedUrlCheckResponseBody = getSavedUrlCheckResponse.body();
-            assertThat(savedUrlCheckResponseBody).isNotNull();
-            assertThat(savedUrlCheckResponseBody.string())
-                    .contains("Test Page")
-                    .contains("Test Description")
-                    .contains("Test H1");
+            assertThat(savedUrlCheck).isNotNull();
+            assertThat(savedUrlCheck.getUrlId()).isNotNull();
+            assertThat(savedUrlCheck.getCreatedAt()).isNotNull();
+            assertThat(savedUrlCheck)
+                    .hasFieldOrPropertyWithValue("urlId", savedUrlId)
+                    .hasFieldOrPropertyWithValue("statusCode", OK)
+                    .hasFieldOrPropertyWithValue("title", "Test Page")
+                    .hasFieldOrPropertyWithValue("h1", "Test H1")
+                    .hasFieldOrPropertyWithValue("description", "Test Description");
         });
         mockWebServer.shutdown();
         mockWebServer.close();
@@ -181,13 +213,18 @@ class AppTest {
     @DisplayName("Should handle POST /urls/{id}/checks with DataBaseOperationException correctly")
     void checkUrlCheckWithDataBaseException() {
         JavalinTest.test(app, (server, client) -> {
-            var requestBody = "url=https://some-domain.org";
+            var url = "https://some-domain.org";
+            var requestBody = "url=" + url;
             var response = client.post(NamedRoutes.urlNew(), requestBody);
             assertThat(response.code()).isEqualTo(OK);
 
+            var optionalUrl = new UrlDao().findByName(url);
+            var savedUrl = optionalUrl.orElse(null);
+            assertThat(savedUrl).isNotNull();
+
             App.FLYWAY.clean();
 
-            var checkResponse = client.post(NamedRoutes.checkNew(1L));
+            var checkResponse = client.post(NamedRoutes.checkNew(savedUrl.getId()));
             assertThat(checkResponse.code()).isEqualTo(INTERNAL_SERVER_ERROR);
         });
     }
