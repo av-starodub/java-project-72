@@ -14,7 +14,7 @@ import java.util.HashMap;
 
 public final class UrlCheckDao extends AbstractBaseDao {
 
-    public UrlCheck save(UrlCheck urlCheck) {
+    public static UrlCheck save(UrlCheck urlCheck) {
         var urlId = urlCheck.getUrlId();
         var statusCode = urlCheck.getStatusCode();
         var h1 = urlCheck.getH1();
@@ -37,7 +37,7 @@ public final class UrlCheckDao extends AbstractBaseDao {
                 .build();
     }
 
-    public List<UrlCheck> findChecksByUrlId(Long urlId) {
+    public static List<UrlCheck> findChecksByUrlId(Long urlId) {
         return executeSelect(
                 "SELECT * FROM url_checks WHERE url_Id = ? ORDER BY created_at DESC",
                 List.of(urlId),
@@ -75,7 +75,7 @@ public final class UrlCheckDao extends AbstractBaseDao {
         ).orElseThrow(() -> new UrlCheckDaoException("Unexpected error"));
     }
 
-    private UrlCheck mapResultSetToUrlCheck(ResultSet resultSet) {
+    private static UrlCheck mapResultSetToUrlCheck(ResultSet resultSet) {
         try {
             return UrlCheck.builder()
                     .id(resultSet.getLong("id"))

@@ -13,22 +13,22 @@ import java.util.Optional;
 
 public final class UrlDao extends AbstractBaseDao {
 
-    public Url save(Url url) {
+    public static Url save(Url url) {
         var name = url.getName();
         var createdAt = Timestamp.valueOf(LocalDateTime.now());
         var urlId = executeStatement("INSERT INTO urls (name, created_at) VALUES (?, ?)", List.of(name, createdAt));
         return new Url(urlId, name, createdAt.toLocalDateTime());
     }
 
-    public Optional<Url> findById(long id) {
+    public static Optional<Url> findById(long id) {
         return findByAttribute("SELECT * FROM urls WHERE id = ?", id);
     }
 
-    public Optional<Url> findByName(String url) {
+    public static Optional<Url> findByName(String url) {
         return findByAttribute("SELECT * FROM urls WHERE name = ?", url);
     }
 
-    private Optional<Url> findByAttribute(String sqlQuery, Object attribute) {
+    private static Optional<Url> findByAttribute(String sqlQuery, Object attribute) {
         return executeSelect(sqlQuery, List.of(attribute), resultSet -> {
             try {
                 if (resultSet.next()) {
@@ -42,7 +42,7 @@ public final class UrlDao extends AbstractBaseDao {
         });
     }
 
-    public List<Url> findAll() {
+    public static List<Url> findAll() {
         return executeSelect("SELECT * FROM urls", List.of(), resultSet -> {
             var urls = new ArrayList<Url>();
             try {
@@ -57,7 +57,7 @@ public final class UrlDao extends AbstractBaseDao {
         }).orElseThrow(() -> new UrlDaoException("Unexpected error"));
     }
 
-    private Url mapResultSetToUrl(ResultSet resultSet) {
+    private static Url mapResultSetToUrl(ResultSet resultSet) {
         try {
             var urlId = resultSet.getLong("id");
             var urlName = resultSet.getString("name");

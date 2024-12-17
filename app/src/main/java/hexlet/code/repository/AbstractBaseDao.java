@@ -24,7 +24,7 @@ public abstract class AbstractBaseDao {
 
     private static final int PRIMARY_KEY_COLUMN_INDEX = 1;
 
-    protected final long executeStatement(String sqlQuery, List<Object> params) {
+    protected static long executeStatement(String sqlQuery, List<Object> params) {
         checkArgs(sqlQuery, params);
 
         return executeTransaction(connection -> {
@@ -64,7 +64,7 @@ public abstract class AbstractBaseDao {
         });
     }
 
-    protected final <T> Optional<T> executeSelect(
+    protected static <T> Optional<T> executeSelect(
             String sqlQuery, List<Object> params, Function<ResultSet, T> rsHandler
     ) {
         checkArgs(sqlQuery, params);
@@ -84,7 +84,7 @@ public abstract class AbstractBaseDao {
         });
     }
 
-    private void setPreparedStatementParameters(PreparedStatement preparedStatement, List<Object> queryParams)
+    private static void setPreparedStatementParameters(PreparedStatement preparedStatement, List<Object> queryParams)
             throws SQLException {
         var idx = 1;
         for (var param : queryParams) {
@@ -92,7 +92,7 @@ public abstract class AbstractBaseDao {
         }
     }
 
-    private void checkArgs(String sqlQuery, List<Object> params) {
+    private static void checkArgs(String sqlQuery, List<Object> params) {
         requireNonNull(sqlQuery, "Parameter sqlQuery must not be null");
         requireNonNull(params, "The list with sql-query parameters can be empty, but not null");
         if (sqlQuery.isEmpty()) {
@@ -100,7 +100,7 @@ public abstract class AbstractBaseDao {
         }
     }
 
-    private <V> V executeTransaction(Function<Connection, V> action) {
+    private static <V> V executeTransaction(Function<Connection, V> action) {
         requireNonNull(action, "Parameter action must not be null");
 
         return wrapException(() -> {
@@ -121,7 +121,7 @@ public abstract class AbstractBaseDao {
         });
     }
 
-    private <V> V wrapException(Callable<V> action) {
+    private static <V> V wrapException(Callable<V> action) {
         try {
             return action.call();
         } catch (DuplicateEntityException e) {
@@ -130,4 +130,5 @@ public abstract class AbstractBaseDao {
             throw new DataBaseOperationException(e.getMessage(), e);
         }
     }
+
 }

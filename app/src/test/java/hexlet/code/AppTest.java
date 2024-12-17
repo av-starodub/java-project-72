@@ -63,7 +63,7 @@ class AppTest {
             var bodyToString = nonNull(body) ? body.string() : "";
             assertThat(bodyToString).contains("https://some-domain.org");
 
-            var optionalUrl = new UrlDao().findByName(urlName);
+            var optionalUrl = UrlDao.findByName(urlName);
             var savedUrl = optionalUrl.orElse(null);
             assertThat(savedUrl).isNotNull();
             assertThat(savedUrl.getId()).isNotNull();
@@ -99,7 +99,7 @@ class AppTest {
             var bodyToString = nonNull(body) ? body.string() : "";
             assertThat(bodyToString).doesNotContain("invalid");
 
-            var optionalUrl = new UrlDao().findByName(invalidUrl);
+            var optionalUrl = UrlDao.findByName(invalidUrl);
             var savedUrl = optionalUrl.orElse(null);
             assertThat(savedUrl).isNull();
         });
@@ -168,7 +168,7 @@ class AppTest {
                     url.port() == -1 ? "" : ":" + url.port()
             );
 
-            var optionalUrl = new UrlDao().findByName(normalizedUrl);
+            var optionalUrl = UrlDao.findByName(normalizedUrl);
             var savedUrl = optionalUrl.orElse(null);
             assertThat(savedUrl).isNotNull();
 
@@ -183,7 +183,7 @@ class AppTest {
                     .contains("Test Description")
                     .contains("Test H1");
 
-            var checks = new UrlCheckDao().findChecksByUrlId(savedUrlId);
+            var checks = UrlCheckDao.findChecksByUrlId(savedUrlId);
             var savedUrlCheck = checks.get(0);
 
             assertThat(savedUrlCheck).isNotNull();
@@ -218,7 +218,7 @@ class AppTest {
             var response = client.post(NamedRoutes.urlNew(), requestBody);
             assertThat(response.code()).isEqualTo(OK);
 
-            var optionalUrl = new UrlDao().findByName(url);
+            var optionalUrl = UrlDao.findByName(url);
             var savedUrl = optionalUrl.orElse(null);
             assertThat(savedUrl).isNotNull();
 
