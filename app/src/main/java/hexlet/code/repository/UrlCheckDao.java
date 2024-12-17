@@ -56,7 +56,7 @@ public final class UrlCheckDao extends AbstractBaseDao {
         ).orElseThrow(() -> new UrlCheckDaoException("Unexpected error"));
     }
 
-    public Map<Long, UrlCheck> findLatestChecks() {
+    public static Map<Long, UrlCheck> findLatestChecks() {
         return executeSelect(
                 "SELECT DISTINCT ON (url_id) * FROM url_checks ORDER BY url_id DESC, id DESC",
                 List.of(),

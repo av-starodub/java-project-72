@@ -26,15 +26,6 @@ import static java.util.Objects.nonNull;
 @Slf4j
 public final class UrlController {
 
-    private final UrlDao urlDao;
-
-    private final UrlCheckDao urlCheckDao;
-
-    public UrlController(UrlDao uDao, UrlCheckDao checkDao) {
-        urlDao = uDao;
-        urlCheckDao = checkDao;
-    }
-
     public Handler create() {
         return ctx -> {
             var inputUrl = ctx.formParam("url");
@@ -55,14 +46,14 @@ public final class UrlController {
                     parsedUrl.getPort() == -1 ? "" : ":" + parsedUrl.getPort()
             );
 
-            var isUrlExist = urlDao.findByName(normalizedUrl).isPresent();
+            var isUrlExist = UrlDao.findByName(normalizedUrl).isPresent();
 
             if (isUrlExist) {
                 ctx.sessionAttribute("flash", "Страница уже существует");
                 ctx.sessionAttribute("alertType", "info");
             } else {
                 var newUrl = new Url(normalizedUrl);
-                urlDao.save(newUrl);
+                UrlDao.save(newUrl);
                 ctx.sessionAttribute("flash", "Страница успешно добавлена");
                 ctx.sessionAttribute("alertType", "success");
             }
@@ -72,8 +63,8 @@ public final class UrlController {
 
     public Handler showAll() {
         return ctx -> {
-            var urls = urlDao.findAll();
-            var latestChecks = urlCheckDao.findLatestChecks();
+            var urls = UrlDao.findAll();
+            var latestChecks = UrlCheckDao.findLatestChecks();
             var urlDtos = urls.stream()
                     .map(url -> {
                         var latestCheck = latestChecks.getOrDefault(url.getId(), new UrlCheck());
@@ -90,8 +81,8 @@ public final class UrlController {
     public Handler showById() {
         return ctx -> {
             var id = ctx.pathParamAsClass("id", Long.class).get();
-            var url = urlDao.findById(id).orElseThrow(() -> new NotFoundResponse("Page not found"));
-            var checks = urlCheckDao.findChecksByUrlId(id);
+            var url = UrlDao.findById(id).orElseThrow(() -> new NotFoundResponse("Page not found"));
+            var checks = UrlCheckDao.findChecksByUrlId(id);
             var page = new UrlPage(url, checks);
             page.setFlash(ctx.consumeSessionAttribute("flash"));
             page.setAlertType(ctx.consumeSessionAttribute("alertType"));
@@ -103,11 +94,11 @@ public final class UrlController {
         return ctx -> {
             var urlId = ctx.pathParamAsClass("id", Long.class).get();
             try {
-                var url = urlDao.findById(urlId).orElseThrow(() -> new NotFoundResponse(
+                var url = UrlDao.findById(urlId).orElseThrow(() -> new NotFoundResponse(
                         "Page with id=%s not found in data base".formatted(urlId))
                 );
                 var newCheck = executeCheck(ctx, url);
-                urlCheckDao.save(newCheck);
+                UrlCheckDao.save(newCheck);
                 ctx.sessionAttribute("flash", "Страница успешно проверена");
                 ctx.sessionAttribute("alertType", "success");
             } catch (NotFoundResponse e) {
