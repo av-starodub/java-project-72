@@ -7,7 +7,6 @@ import io.javalin.Javalin;
 import io.javalin.testtools.JavalinTest;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,11 +28,6 @@ class AppTest {
     @BeforeEach
     void setUp() {
         app = App.getApp();
-    }
-
-    @AfterEach
-    void tearDown() {
-        App.FLYWAY.clean();
     }
 
     @Test
@@ -63,8 +57,7 @@ class AppTest {
             var bodyToString = nonNull(body) ? body.string() : "";
             assertThat(bodyToString).contains("https://some-domain.org");
 
-            var optionalUrl = UrlDao.findByName(urlName);
-            var savedUrl = optionalUrl.orElse(null);
+            var savedUrl = UrlDao.findByName(urlName).orElse(null);
             assertThat(savedUrl).isNotNull();
             assertThat(savedUrl.getId()).isNotNull();
             assertThat(savedUrl.getCreatedAt()).isNotNull();
@@ -99,8 +92,7 @@ class AppTest {
             var bodyToString = nonNull(body) ? body.string() : "";
             assertThat(bodyToString).doesNotContain("invalid");
 
-            var optionalUrl = UrlDao.findByName(invalidUrl);
-            var savedUrl = optionalUrl.orElse(null);
+            var savedUrl = UrlDao.findByName(invalidUrl).orElse(null);
             assertThat(savedUrl).isNull();
         });
     }
@@ -168,8 +160,7 @@ class AppTest {
                     url.port() == -1 ? "" : ":" + url.port()
             );
 
-            var optionalUrl = UrlDao.findByName(normalizedUrl);
-            var savedUrl = optionalUrl.orElse(null);
+            var savedUrl = UrlDao.findByName(normalizedUrl).orElse(null);
             assertThat(savedUrl).isNotNull();
 
             var savedUrlId = savedUrl.getId();
@@ -218,8 +209,7 @@ class AppTest {
             var response = client.post(NamedRoutes.urlNew(), requestBody);
             assertThat(response.code()).isEqualTo(OK);
 
-            var optionalUrl = UrlDao.findByName(url);
-            var savedUrl = optionalUrl.orElse(null);
+            var savedUrl = UrlDao.findByName(url).orElse(null);
             assertThat(savedUrl).isNotNull();
 
             App.FLYWAY.clean();
