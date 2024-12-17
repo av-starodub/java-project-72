@@ -7,7 +7,7 @@
 
 ### Описание
 
-[Page Analyzer](https://java-page-analyzer-ru.hexlet.app/) – сайт, который анализирует указанные страницы на SEO пригодность.
+Сайт, который анализирует указанные страницы на SEO пригодность.
 
 ### Использование приложения
     git clone https://github.com/av-starodub/java-project-72.git
